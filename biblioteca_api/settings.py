@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'books',
     'loans',
     'users',
+    'history',
     
 ]
 

@@ -10,5 +10,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/v1/', include('books.urls')),
     path('api/v1/', include('loans.urls')),
-    path('api/v1/', include('users.urls'))
+    path('api/v1/', include('users.urls')),
+    path('api/v1/', include('history.urls')),
 ]
