@@ -1,8 +1,8 @@
 # API de Gestión de Biblioteca
 
-Este proyecto consiste en una API REST para la gestión de una biblioteca. La aplicación permite administrar libros, usuarios y préstamos, además de mantener un historial de los préstamos realizados.
+Este proyecto consiste en una API REST para la gestión de una biblioteca. La aplicación permite administrar libros, usuarios y préstamos de libros, además de mantener un historial de los libros que han sido prestados.
 
-Los usuarios pueden consultar los libros disponibles, realizar préstamos y revisar su propio historial. Por otro lado, el administrador tiene acceso a la gestión completa de los libros y préstamos, además de poder consultar el historial de todos los usuarios.
+Los usuarios pueden consultar los libros disponibles y solicitar un libro en préstamo para posteriormente devolverlo. También pueden consultar su historial de libros prestados. Por otro lado, el administrador tiene acceso a la gestión completa de los libros y préstamos, además de poder consultar el historial de todos los usuarios.
 
 ## Características principales
 
@@ -13,13 +13,13 @@ Los usuarios pueden consultar los libros disponibles, realizar préstamos y revi
 - Contraseñas protegidas mediante el sistema de hashing de Django (PBKDF2).
 - Validación de los datos recibidos mediante Serializers.
 - Gestión de libros mediante operaciones CRUD.
-- Registro y gestión de préstamos.
+- Registro y gestión de préstamos de libros.
 - Actualización automática del estado del libro al realizar o devolver un préstamo.
-- Historial de préstamos para consultar los préstamos realizados anteriormente.
+- Historial de libros prestados para consultar los préstamos realizados anteriormente.
 - Los usuarios pueden consultar únicamente su propio historial.
-- Los administradores pueden consultar el historial de todos los usuarios.
+- Los administradores pueden consultar el historial de préstamos de todos los usuarios.
 - Filtros por categoría, estado de disponibilidad y búsqueda por texto.
-- Documentación de la API mediante Swagger UI.
+- Documentación de la API mediante Swagger.
 - Despliegue en Render Web Service conectado con GitHub.
 
 ---
@@ -112,29 +112,29 @@ El acceso a las diferentes funciones depende del tipo de usuario que haya inicia
 
 | Rol / Tipo | Permisos en Libros y Préstamos | Permisos en Historial |
 | :---: | :--- | :--- |
-| **Administrador** (`is_staff=True`) | Puede gestionar libros y préstamos, además de tener acceso al panel `/admin/`. | Puede consultar el historial de préstamos de todos los usuarios. |
-| **Usuario** (`IsAuthenticated`) | Puede consultar el catálogo disponible y realizar sus propios préstamos. | Puede consultar únicamente su propio historial de préstamos. |
+| **Administrador** (`is_staff=True`) | Puede gestionar libros y préstamos de libros, además de tener acceso al panel `/admin/`. | Puede consultar el historial de libros prestados por todos los usuarios. |
+| **Usuario** (`IsAuthenticated`) | Puede consultar el catálogo disponible y solicitar libros en préstamo. | Puede consultar únicamente su propio historial de libros prestados. |
 
-### Historial de préstamos
+### Historial de libros prestados
 
-La aplicación cuenta con un módulo independiente llamado `history`, encargado de mostrar los préstamos que se han realizado.
+La aplicación cuenta con un módulo independiente llamado `history`, encargado de consultar los préstamos de libros que se han realizado.
 
 El historial funciona de acuerdo con el usuario que realiza la consulta:
 
-- Un usuario normal solo puede ver los préstamos asociados a su propia cuenta.
-- Un administrador puede consultar los préstamos realizados por todos los usuarios.
-- Los préstamos permanecen registrados después de ser devueltos.
-- El historial permite consultar tanto préstamos activos como préstamos que ya fueron devueltos.
+- Un usuario normal solo puede ver los libros que ha solicitado en préstamo.
+- Un administrador puede consultar los libros prestados por todos los usuarios.
+- Los registros permanecen almacenados después de que un libro es devuelto.
+- El historial permite consultar tanto libros que todavía están prestados como libros que ya fueron devueltos.
 
-De esta forma, un usuario no puede acceder directamente a la información de préstamos de otra persona.
+De esta forma, un usuario no puede acceder directamente a la información de los libros que han sido solicitados por otra persona.
 
 ---
 
 ## Lógica de negocio implementada
 
-### Creación de préstamos
+### Solicitud de préstamo de un libro
 
-Cuando un usuario solicita un libro, la API realiza varias validaciones antes de registrar el préstamo:
+Cuando un usuario quiere llevarse un libro de la biblioteca, realiza una solicitud de préstamo. Antes de registrar la operación, la API realiza las siguientes validaciones:
 
 - Se comprueba que el libro exista.
 - Se verifica que el libro se encuentre disponible (`AVAILABLE`).
@@ -142,24 +142,24 @@ Cuando un usuario solicita un libro, la API realiza varias validaciones antes de
 - Se registra el préstamo en la base de datos.
 - El estado del libro cambia automáticamente a `BORROWED` (Prestado).
 
-Esto evita que un mismo libro pueda ser prestado nuevamente mientras se encuentre ocupado.
+Esto evita que un mismo libro pueda ser solicitado nuevamente mientras se encuentre prestado.
 
-### Devolución de préstamos
+### Devolución del libro
 
-Cuando un libro es devuelto:
+Cuando el usuario devuelve el libro:
 
-- Se actualiza el estado del préstamo.
-- Se registra la devolución correspondiente.
+- Se actualiza el registro del préstamo como `RETURNED` (Devuelto).
+- Se registra la información correspondiente a la devolución.
 - El estado del libro vuelve a `AVAILABLE` (Disponible).
-- El préstamo continúa almacenado para poder consultarlo posteriormente desde el historial.
+- El registro del préstamo permanece almacenado para poder consultarlo posteriormente en el historial.
 
-### Consulta del historial
+### Consulta del historial de libros prestados
 
-El módulo `history` permite consultar los préstamos realizados anteriormente.
+El módulo `history` permite consultar los libros que han sido prestados anteriormente.
 
-Para un usuario normal, la consulta se filtra utilizando el usuario autenticado, por lo que únicamente se muestran sus propios registros.
+Para un usuario normal, la consulta se filtra utilizando el usuario autenticado, por lo que únicamente se muestran los libros que ha solicitado en préstamo.
 
-En el caso de un administrador, se permite consultar todos los registros de préstamos almacenados en el sistema.
+En el caso de un administrador, se permite consultar todos los registros de préstamos de libros almacenados en el sistema.
 
 Endpoint utilizado:
 
@@ -225,7 +225,7 @@ DB_HOST=localhost
 DB_PORT=5432
 ```
 
-En producción se utilizan las variables de entorno proporcionadas por Render para la conexión con PostgreSQL.
+En producción se utilizan las variables de entorno configuradas en Render para la conexión con PostgreSQL.
 
 ### 5. Ejecutar las migraciones
 
@@ -326,39 +326,41 @@ Incluye:
 
 ### Loans
 
-Se encarga de los préstamos.
+Se encarga de los préstamos de libros.
 
 Incluye:
 
-- Registrar préstamos.
+- Solicitar un libro en préstamo.
 - Consultar préstamos.
-- Actualizar préstamos.
-- Registrar devoluciones.
+- Actualizar información del préstamo.
+- Registrar la devolución de un libro.
 - Validar la disponibilidad de los libros.
 - Actualizar automáticamente el estado de los libros.
 
 ### History
 
-Se encarga de consultar el historial de préstamos.
+Se encarga de consultar el historial de libros prestados.
 
-Su funcionamiento depende del usuario autenticado:
+Su funcionamiento depende del usuario autenticado.
+
+Para un usuario normal:
 
 ```text
 Usuario
    ↓
 /api/v1/history/
    ↓
-Solo muestra sus propios préstamos
+Solo muestra los libros que ha solicitado en préstamo
 ```
 
-Mientras que para un administrador:
+Para un administrador:
 
 ```text
 Administrador
       ↓
 /api/v1/history/
       ↓
-Muestra el historial de todos los usuarios
+Muestra los libros prestados por todos los usuarios
 ```
 
 ---
@@ -367,23 +369,14 @@ Muestra el historial de todos los usuarios
 
 Los libros manejan diferentes estados para controlar su disponibilidad:
 
-- `AVAILABLE`: el libro se encuentra disponible.
-- `BORROWED`: el libro está actualmente prestado.
+- `AVAILABLE`: el libro se encuentra disponible para ser solicitado en préstamo.
+- `BORROWED`: el libro se encuentra actualmente prestado a un usuario.
 - `MAINTENANCE`: el libro no se encuentra disponible debido a mantenimiento.
 
-Los préstamos también manejan estados para identificar si todavía están activos o si ya fueron devueltos.
+Los préstamos también manejan estados para identificar si el préstamo de un libro todavía está activo o si ya fue devuelto.
 
 ---
 
-## Base de datos
-
-Durante el desarrollo local se puede utilizar SQLite para realizar pruebas de forma sencilla.
-
-Para el entorno de producción se utiliza PostgreSQL, alojado en Render.
-
-La conexión a la base de datos se configura mediante variables de entorno, evitando colocar directamente las credenciales dentro del código fuente.
-
----
 
 ## Despliegue
 
