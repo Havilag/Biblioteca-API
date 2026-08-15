@@ -3,6 +3,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.permissions import IsAuthenticated
 from .models import Book
 from .serializers import BookSerializer
+from history.models import HistoryLog
 from drf_spectacular.utils import extend_schema, extend_schema_view
 
 
@@ -25,6 +26,15 @@ class BookView(generics.ListCreateAPIView):
     
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['category', 'status', 'author']
+    
+    def perform_create(self, serializer):
+        book = serializer.save()
+        
+        HistoryLog.objects.create(
+            user=self.request.user,
+            action=HistoryLog.ActionTypes.BOOK_ADDED,
+            description=f"Registró el libro '{book.title}'."
+        )
     
     
 @extend_schema(tags=['Book'])
