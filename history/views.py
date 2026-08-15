@@ -1,8 +1,10 @@
 from rest_framework import generics, permissions
 from .models import HistoryLog
 from .serializers import HistoryLogSerializer
+from drf_spectacular.utils import extend_schema
 
-class HistoryLogListView(generics.ListAPIView):
+@extend_schema(tags=['Historial de Usuario'])
+class HistoryLogView(generics.ListAPIView):
     serializer_class = HistoryLogSerializer
     permission_classes = [permissions.IsAuthenticated]
 
